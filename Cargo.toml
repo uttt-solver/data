@@ -1,0 +1,8 @@
+[package]
+name = "uttt-solver-data"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+diesel = { version = "2.1.0", features = ["postgres"] }
+dotenvy = "0.15"
