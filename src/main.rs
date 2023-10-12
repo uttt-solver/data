@@ -104,7 +104,7 @@ fn main() {
         let results = branches
             .filter(done.eq(false))
             .order(distance)
-            .limit(1)
+            .limit(1024)
             .select(Branch::as_select())
             .load(connection)
             .expect("Error loading branches");
@@ -113,43 +113,44 @@ fn main() {
             break;
         }
 
-        let branch_to_update = &results[0];
-        let new_branches = create_branches(&branch_to_update.state);
-        let transaction_result: Result<String, _> = connection.transaction(|conn| {
-            for new_branch in &new_branches {
-                diesel::insert_into(branches::table)
-                    .values((
-                        branches::state.eq(new_branch),
-                        branches::distance.eq(branch_to_update.distance + 1),
-                    ))
-                    .on_conflict_do_nothing()
-                    .execute(conn)?;
-                diesel::insert_into(branches_next::table)
-                    .values((
-                        branches_next::current.eq(&branch_to_update.state),
-                        branches_next::next.eq(new_branch),
-                    ))
-                    .on_conflict_do_nothing()
-                    .execute(conn)?;
-                diesel::insert_into(branches_prev::table)
-                    .values((
-                        branches_prev::current.eq(new_branch),
-                        branches_prev::prev.eq(&branch_to_update.state),
-                    ))
-                    .on_conflict_do_nothing()
+        let transaction_result = connection.transaction(|conn| {
+            for branch_to_update in &results {
+                let new_branches = create_branches(&branch_to_update.state);
+                for new_branch in &new_branches {
+                    diesel::insert_into(branches::table)
+                        .values((
+                            branches::state.eq(new_branch),
+                            branches::distance.eq(branch_to_update.distance + 1),
+                        ))
+                        .on_conflict_do_nothing()
+                        .execute(conn)?;
+                    diesel::insert_into(branches_next::table)
+                        .values((
+                            branches_next::current.eq(&branch_to_update.state),
+                            branches_next::next.eq(new_branch),
+                        ))
+                        .on_conflict_do_nothing()
+                        .execute(conn)?;
+                    diesel::insert_into(branches_prev::table)
+                        .values((
+                            branches_prev::current.eq(new_branch),
+                            branches_prev::prev.eq(&branch_to_update.state),
+                        ))
+                        .on_conflict_do_nothing()
+                        .execute(conn)?;
+                }
+
+                diesel::update(branches::table.find(&branch_to_update.state))
+                    .set(branches::done.eq(true))
                     .execute(conn)?;
             }
 
-            diesel::update(branches::table.find(&branch_to_update.state))
-                .set(branches::done.eq(true))
-                .execute(conn)?;
-
-            Ok::<String, Error>(branch_to_update.state.clone())
+            Ok::<usize, Error>(results.len())
         });
 
         match transaction_result {
             Ok(result) => {
-                println!("Processed {} successfully", result);
+                println!("Processed {} states successfully", result);
             }
             Err(err) => {
                 eprintln!("Transaction failed: {}", err);
