@@ -1,5 +1,5 @@
 CREATE TABLE branches (
-    state VARCHAR PRIMARY KEY,
+    state CHAR(30) PRIMARY KEY,
     distance INT NOT NULL,
     done BOOLEAN NOT NULL DEFAULT FALSE
 );
@@ -7,16 +7,12 @@ CREATE TABLE branches (
 CREATE INDEX branches_done_distance_state ON branches (done, distance, state);
 
 CREATE TABLE branches_next (
-    current VARCHAR,
-    next VARCHAR,
+    current CHAR(30),
+    next CHAR(30),
     CONSTRAINT branches_next_pkey PRIMARY KEY (current, next)
 );
 
-CREATE TABLE branches_prev (
-    current VARCHAR,
-    prev VARCHAR,
-    CONSTRAINT branches_prev_pkey PRIMARY KEY (current, prev)
-);
+CREATE INDEX branches_next_current_next ON branches_next (current, next);
 
 INSERT INTO branches (state, distance) VALUES ('SAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 0);
 INSERT INTO branches (state, distance) VALUES ('AQAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 0);

@@ -9,10 +9,3 @@ pub struct Branch {
     pub distance: i32,
     pub done: bool,
 }
-
-#[derive(Insertable)]
-#[diesel(table_name = branches)]
-pub struct NewBranch<'a> {
-    pub state: &'a str,
-    pub distance: i32,
-}

@@ -2,7 +2,8 @@
 
 diesel::table! {
     branches (state) {
-        state -> Varchar,
+        #[max_length = 30]
+        state -> Bpchar,
         distance -> Int4,
         done -> Bool,
     }
@@ -10,20 +11,14 @@ diesel::table! {
 
 diesel::table! {
     branches_next (current, next) {
-        current -> Varchar,
-        next -> Varchar,
-    }
-}
-
-diesel::table! {
-    branches_prev (current, prev) {
-        current -> Varchar,
-        prev -> Varchar,
+        #[max_length = 30]
+        current -> Bpchar,
+        #[max_length = 30]
+        next -> Bpchar,
     }
 }
 
 diesel::allow_tables_to_appear_in_same_query!(
     branches,
     branches_next,
-    branches_prev,
 );

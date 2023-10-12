@@ -96,7 +96,7 @@ fn create_branches(state: &String) -> Vec<String> {
 
 fn main() {
     use self::schema::branches::dsl::*;
-    use self::schema::{branches, branches_next, branches_prev};
+    use self::schema::{branches, branches_next};
 
     let connection = &mut establish_connection();
 
@@ -128,13 +128,6 @@ fn main() {
                         .values((
                             branches_next::current.eq(&branch_to_update.state),
                             branches_next::next.eq(new_branch),
-                        ))
-                        .on_conflict_do_nothing()
-                        .execute(conn)?;
-                    diesel::insert_into(branches_prev::table)
-                        .values((
-                            branches_prev::current.eq(new_branch),
-                            branches_prev::prev.eq(&branch_to_update.state),
                         ))
                         .on_conflict_do_nothing()
                         .execute(conn)?;
