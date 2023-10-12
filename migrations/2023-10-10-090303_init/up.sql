@@ -12,8 +12,6 @@ CREATE TABLE branches_next (
     CONSTRAINT branches_next_pkey PRIMARY KEY (current, next)
 );
 
-CREATE INDEX branches_next_current_next ON branches_next (current, next);
-
 INSERT INTO branches (state, distance) VALUES ('SAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 0);
 INSERT INTO branches (state, distance) VALUES ('AQAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 0);
 INSERT INTO branches (state, distance) VALUES ('CEAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 0);
