@@ -1,7 +1,7 @@
 version: "3"
 
 services:
-    postgresql:
+    db:
         image: postgres:latest
         ports:
             - 65432:5432
@@ -10,3 +10,27 @@ services:
             POSTGRES_PASSWORD: supersecretpassword
         volumes:
             - ./data:/var/lib/postgresql/data
+        networks:
+            - mynetwork
+
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        depends_on:
+            - db
+        networks:
+            - mynetwork
+
+    pgadmin:
+        image: dpage/pgadmin4
+        ports:
+            - 5050:80
+        environment:
+            PGADMIN_DEFAULT_EMAIL: aa@bb.cc
+            PGADMIN_DEFAULT_PASSWORD: supersecretpassword
+        networks:
+            - mynetwork
+
+networks:
+    mynetwork:

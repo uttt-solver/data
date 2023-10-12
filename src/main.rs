@@ -17,14 +17,30 @@ use game_state::{
     pack_game_state_to_base64, sanitize_game_state, sanitize_grid_state,
     unpack_game_state_from_base64, CellState, GameState, GridPosition, GridState,
 };
-use std::env;
+use std::{env, process, thread::sleep, time::Duration};
 
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+
+    let max_wait_time = 60;
+    let poll_interval = Duration::from_secs(2);
+
+    for _ in 0..max_wait_time {
+        match PgConnection::establish(&database_url) {
+            Ok(connection) => {
+                println!("Successfully connected to the database");
+                return connection;
+            }
+            Err(_) => {
+                println!("Waiting for the database to become available...");
+            }
+        }
+        sleep(poll_interval);
+    }
+
+    panic!("Failed to connect to the database within the timeout.");
 }
 
 fn create_branches(state: &String) -> Vec<String> {
@@ -104,7 +120,7 @@ fn main() {
         let results = branches
             .filter(done.eq(false))
             .order(distance)
-            .limit(10)
+            .limit(100)
             .select(Branch::as_select())
             .load(connection)
             .expect("Error loading branches");
@@ -150,6 +166,7 @@ fn main() {
             }
             Err(err) => {
                 eprintln!("Transaction failed: {}", err);
+                process::exit(1)
             }
         }
     }
