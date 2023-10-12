@@ -104,7 +104,7 @@ fn main() {
         let results = branches
             .filter(done.eq(false))
             .order(distance)
-            .limit(1024)
+            .limit(10)
             .select(Branch::as_select())
             .load(connection)
             .expect("Error loading branches");
@@ -133,9 +133,12 @@ fn main() {
                         .execute(conn)?;
                 }
 
-                diesel::update(branches::table.find(&branch_to_update.state))
-                    .set(branches::done.eq(true))
-                    .execute(conn)?;
+                assert_eq!(
+                    diesel::update(branches::table.find(&branch_to_update.state.trim()))
+                        .set(branches::done.eq(true))
+                        .execute(conn)?,
+                    1
+                );
             }
 
             Ok::<usize, Error>(results.len())
